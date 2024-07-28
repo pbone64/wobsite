@@ -1,0 +1,5 @@
+[template]
+file = "default.html"
+name = "default"
+
+[macros]

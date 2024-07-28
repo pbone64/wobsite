@@ -1,0 +1,7 @@
+[site]
+name = "Wobsite Example"
+
+[site.directories]
+pages = "pages"
+templates = "templates"
+assets = [ "img", "css" ]
