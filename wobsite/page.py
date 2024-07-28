@@ -18,7 +18,7 @@ class PageManifest:
 
     content_file: str
     output_file_name: str
-    template: None | str
+    template: str
     macro_values: Dict[str, Any]
 
     def open_content_file(self) -> IO[str]:
@@ -42,7 +42,7 @@ def page_manifest_from_toml(file_path: str) -> PageManifest:
         path.splitext(path.basename(content_file))[0]
     )
 
-    template = pagespec.TEMPLATE_KEY.get_or_default_in(toml, None)
+    template = pagespec.TEMPLATE_KEY.get_in(toml)
     macro_values: Dict[str, Any] = pagespec.MACROS_TABLE.get_or_default_in(toml, {})
 
     return PageManifest(file_path, content_file_path, content_file, output_file, template, macro_values)

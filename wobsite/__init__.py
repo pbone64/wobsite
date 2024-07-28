@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import os
 from os import path
 
+from wobsite.macro import MacroStack
 from wobsite.spec.manifests import site as sitespec
 from wobsite.spec.manifests import template as templatespec
 from wobsite.spec.manifests import page as pagespec
@@ -106,29 +107,52 @@ class Wobsite:
         template_compiler = TemplateCompiler([ HtmlTemplateFormat() ])
         page_compiler = PageCompiler([ HtmlPageFormat(), MdPageFormat() ])
 
+        macros = MacroStack()
+
+        macros.push(self.manifest.macro_values)
+
         if path.exists(self.__artifact_path()):
             shutil.rmtree(self.__artifact_path())
 
         os.mkdir(self.__artifact_path())
 
         for page in self.pages:
+            print(f"Compiling template {page.template}")
+            try:
+                if page.template not in self.__template_lookup:
+                    raise Exception(f"Template {page.template} does not exist")
+
+                template = self.__template_lookup[page.template]
+                compiled_template = template_compiler.compile(template)
+                macros.push(template.macro_values)
+            except Exception as e:
+                raise Exception(f"Error while compiling template {page.template}.") from e
+
             print(f"Compiling page {page.content_file_path}")
             try:
-                if page.template is None:
-                    output = page.open_content_file().read()
-                else:
-                    compiled_page = page_compiler.compile(page)
-
-                    if page.template not in self.__template_lookup:
-                        raise Exception(f"Template {page.template} request by page {page.manifest_file_path} does not exist.")
-
-                    template = template_compiler.compile(self.__template_lookup[page.template])
-                    template.substitute_content(compiled_page.content)
-                    output = template.tostring()
-
-                self.__write_build_artifact(f"{page.output_file_name}.html", output)
+                compiled_page = page_compiler.compile(page)
+                macros.push(page.macro_values)
             except Exception as e:
                 raise Exception(f"Error while compiling page {page.manifest_file_path}.") from e
+            
+            print(f"Building page {page.output_file_name}")
+            try:
+                compiled_template.substitute_content(compiled_page.content)
+            except Exception as e:
+                raise Exception(f"Error while building page {page.output_file_name}.") from e
+            
+            print(f"Expanding macros...")
+            try:
+                compiled_template.expand_macros(macros)
+            except Exception as e:
+                raise Exception(f"Error wile expanding macros in page {page.manifest_file_path}.") from e
+            
+            # TODO better way to handle output
+            output = compiled_template.tostring()
+            self.__write_build_artifact(f"{page.output_file_name}.html", output)
+
+            macros.pop()
+            macros.pop()
             
         for asset_dir in self.manifest.asset_directories:
             asset_path = path.join(self.manifest.directory, asset_dir)

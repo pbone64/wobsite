@@ -5,4 +5,3 @@ output = "index"
 
 [macros]
 title = "Homepage"
-description = "An example wobsite!"

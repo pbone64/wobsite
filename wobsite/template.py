@@ -7,8 +7,9 @@ from os import path
 import tomllib
 from lxml import etree
 from lxml.html import HtmlElement
-from lxml.etree import _ElementTree, _Element # type: ignore
+from lxml.etree import _ElementTree # type: ignore
 
+from wobsite.macro import MacroStack
 from wobsite.spec import custom_elements
 from wobsite.spec.manifests import template as templatespec
 
@@ -21,7 +22,7 @@ class TemplateManifest:
 
     content_file: str
     name: str
-    macros: Dict[str, Any]
+    macro_values: Dict[str, Any]
 
     def open_content_file(self) -> IO[str]:
         return open(self.content_file_path, "rt", encoding="utf-8")
@@ -60,9 +61,31 @@ class CompiledTemplate:
 
         # TODO double-check that parent is only None when the element is root
         if parent is None:
-            self.document._setroot(placeholder)
+            self.document._setroot(page_content)
         else:
             parent.replace(placeholder, page_content)
+
+    def expand_macros(self, macros: MacroStack) -> None:
+        for e in self.document.findall(f".//{custom_elements.MACRO_PLACEHOLDER_ELEMENT}"):
+            parent = e.getparent()
+            older_sibling = e.getprevious()
+
+            if parent is None:
+                # TODO write an error for this extreme edge-case
+                break
+
+            # TODO improve key handling
+            key = e.attrib.get("key")
+
+            if key is None:
+                key = "MACRO_ERR"
+
+            if older_sibling is None:
+                parent.text = macros.get_value(key)
+            else:
+                older_sibling.tail = "macro"
+
+            parent.remove(e)
 
     def tostring(self) -> str:
         return etree.tostring(self.document, encoding="unicode", method="html")
