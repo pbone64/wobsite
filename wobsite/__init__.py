@@ -1,10 +1,10 @@
 import shutil
 from typing import Callable, Dict, TypeVar, List
-from dataclasses import dataclass
 
 import os
 from os import path
 
+from wobsite.log import Log
 from wobsite.macro import MacroStack
 from wobsite.spec.manifests import site as sitespec
 from wobsite.spec.manifests import template as templatespec
@@ -19,8 +19,9 @@ from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 # TODO website-level output encoding option
 
 #### TODO code structure improvements:
-# TODO artifact path handling is incredibly cursed
+# TODO artifact path handling is slightly cursed
 # TODO better errors
+# TODO redesign compiler structure
 # TODO unify format & processor types
 # TODO unify manifest parsing
 
@@ -33,10 +34,12 @@ from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 # TODO write docs
 # TODO write tests
 
+#### TODO misc:
+# TODO GitHub actions workflow
+
 # Is this seriously how generics are meant to be used? This seems wrong
 T = TypeVar('T')
 
-@dataclass(init=False)
 class Wobsite:
     directory: str
     manifest: SiteManifest
@@ -101,6 +104,11 @@ class Wobsite:
         return l
 
     def compile(self) -> None:
+        comp_log = Log()
+
+        comp_log.info(f"Compiling {self.directory}")
+        comp_log.indent()
+
         template_compiler = TemplateCompiler([ HtmlTemplateFormat() ])
         page_compiler = PageCompiler([ HtmlPageFormat(), MdPageFormat() ])
 
@@ -114,35 +122,45 @@ class Wobsite:
         os.mkdir(self.__artifact_path())
 
         for page in self.pages:
-            print(f"Compiling template {page.template}")
+            comp_log.info(f"Compiling page '{page.manifest_file_path}'")
+            comp_log.indent()
+
+            comp_log.info(f"Compiling template '{page.template}'")
+            comp_log.indent()
             try:
                 if page.template not in self.__template_lookup:
                     raise Exception(f"Template {page.template} does not exist")
 
                 template = self.__template_lookup[page.template]
+                comp_log.info(f"Parsing template content '{template.content_file}'")
                 compiled_template = template_compiler.compile(template)
                 macros.push(template.macro_values)
             except Exception as e:
-                raise Exception(f"Error while compiling template {page.template}.") from e
+                raise Exception(f"Error while compiling template '{page.template}'") from e
+            comp_log.outdent()
 
-            print(f"Compiling page {page.content_file_path}")
+            comp_log.info(f"Parsing page content '{page.content_file_path}'")
+            comp_log.indent()
             try:
                 compiled_page = page_compiler.compile(page)
                 macros.push(page.macro_values)
             except Exception as e:
-                raise Exception(f"Error while compiling page {page.manifest_file_path}.") from e
+                raise Exception(f"Error while compiling page '{page.manifest_file_path}'") from e
+            comp_log.outdent()
             
-            print(f"Building page {page.output_file_name}")
+            comp_log.info(f"Building page '{page.output_file_name}'")
+            comp_log.indent()
+
             try:
+                comp_log.info("Substituting...")
                 compiled_template.substitute_content(compiled_page.content)
-            except Exception as e:
-                raise Exception(f"Error while building page {page.output_file_name}.") from e
-            
-            print(f"Expanding macros...")
-            try:
+
+                comp_log.info("Expanding...")
                 compiled_template.expand_macros(macros)
             except Exception as e:
-                raise Exception(f"Error wile expanding macros in page {page.manifest_file_path}.") from e
+                raise Exception(f"Error while building page '{page.output_file_name}'") from e
+            
+            comp_log.outdent()
             
             # TODO better way to handle output
             output = compiled_template.tostring()
@@ -150,19 +168,29 @@ class Wobsite:
 
             macros.pop()
             macros.pop()
+            comp_log.outdent()
             
         for asset_dir in self.manifest.asset_directories:
             asset_path = path.join(self.manifest.directory, asset_dir)
-            print(f"Copying asset directory {asset_path}")
 
+            comp_log.info(f"Processing asset directory '{asset_path}'")
+            comp_log.indent()
+            
             try:
                 if not os.path.exists(asset_path):
-                    raise FileNotFoundError(f"{asset_path} does not exist")
+                    raise FileNotFoundError(f"'{asset_path}' does not exist")
             
                 output_dir = path.join(self.__artifact_path(), asset_dir)
+                comp_log.info(f"Copying to {output_dir}")
                 shutil.copytree(asset_path, output_dir)
             except Exception as e:
-                raise Exception(f"Error while copying asset folder {asset_dir}") from e
+                raise Exception(f"Error while copying asset folder '{asset_dir}'") from e
+            
+            comp_log.outdent()
+
+        comp_log.outdent()
+        comp_log.outdent()
+        comp_log.info("Done!")
 
     def __artifact_path(self) -> str:
         return path.join(self.directory, self.manifest.output_directory)
