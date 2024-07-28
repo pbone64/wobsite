@@ -14,7 +14,6 @@ from wobsite.page import PageManifest, page_manifest_from_toml, PageCompiler
 from wobsite.template_formats import HtmlTemplateFormat
 from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 
-# TODO set up repeatable installs
 
 #### TODO configuration improvements:
 # TODO website-level output encoding option
@@ -27,14 +26,14 @@ from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 # TODO unify manifest parsing
 
 #### TODO features:
+# TODO asset folder handling
 # TODO cli interface
 # TODO macro expansion
 # TODO incremental builds
 # TODO toml attribute type validation
 
 #### TODO documentation:
-# TODO write a readme 
-# TODO write spec
+# TODO write docs
 # TODO write tests
 
 @dataclass(init=False)

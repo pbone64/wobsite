@@ -13,5 +13,6 @@ TABLE_DIRECTORIES: Final[TomlKey] = SITE_TABLE.sub("directories")
 TEMPLATES_DIRECTORIES_KEY: Final[TomlKey] = TABLE_DIRECTORIES.sub("templates")
 PAGES_DIRECTORIES_KEY: Final[TomlKey] = TABLE_DIRECTORIES.sub("pages")
 ASSETS_DIRECTORIES_KEY: Final[TomlKey] = TABLE_DIRECTORIES.sub("assets")
+OUTPUT_DIRECTORY_KEY: Final[TomlKey] = TABLE_DIRECTORIES.sub("output")
 
 MACROS_TABLE: Final[TomlKey] = __common.TABLE_MACROS
