@@ -27,7 +27,7 @@ from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 
 #### TODO features:
 # TODO asset folder handling
-# TODO warn about improper manifest rather than failing
+# TODO warn about improper manifests rather than failing
 # TODO toml attribute type validation
 # TODO macro expansion
 # TODO incremental builds
@@ -128,7 +128,20 @@ class Wobsite:
 
                 self.__write_build_artifact(f"{page.output_file_name}.html", output)
             except Exception as e:
-                raise Exception(f"Error while compiling {page.content_file_path}.") from e
+                raise Exception(f"Error while compiling page {page.manifest_file_path}.") from e
+            
+        for asset_dir in self.manifest.asset_directories:
+            asset_path = path.join(self.manifest.directory, asset_dir)
+            print(f"Copying asset directory {asset_path}")
+
+            try:
+                if not os.path.exists(asset_path):
+                    raise FileNotFoundError(f"{asset_path} does not exist")
+            
+                output_dir = path.join(self.__artifact_path(), asset_dir)
+                shutil.copytree(asset_path, output_dir)
+            except Exception as e:
+                raise Exception(f"Error while copying asset folder {asset_dir}") from e
 
     def __instantiate_template(self, name: str, template_compiler: TemplateCompiler) -> CompiledTemplate:
         if name not in self.__compiled_templates:

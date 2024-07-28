@@ -27,7 +27,7 @@ def site_manifest_from_toml(file_path: str) -> SiteManifest:
     if not path.isfile(file_path):
         raise FileNotFoundError(f"{file_path} does not exist")
 
-    directory = path.basename(file_path)
+    directory = path.dirname(file_path)
 
     with open(file_path, "rb") as file:
         toml = tomllib.load(file)

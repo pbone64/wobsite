@@ -7,3 +7,6 @@ pyvenv.cfg
 
 # python general
 **/__pycache__
+
+# wobsite
+example/.build

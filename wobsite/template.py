@@ -18,6 +18,7 @@ class TemplateManifest:
     manifest_file_path: str
     content_file_path: str
 
+    content_file: str
     name: str
     macros: Dict[str, Any]
 
@@ -34,11 +35,13 @@ def template_manifest_from_toml(file_path: str) -> TemplateManifest:
         toml = tomllib.load(file)
 
     name = templatespec.NAME_KEY.get_or_default_in(toml, path.basename(file_path).split('.')[0])
+
     content_file = templatespec.FILE_KEY.get_in(toml)
+    content_file_path = path.join(directory, content_file)
 
     macros: Dict[str, Any] = templatespec.MACROS_TABLE.get_or_default_in(toml, {})
 
-    return TemplateManifest(file_path, path.join(directory, content_file), name, macros)
+    return TemplateManifest(file_path, content_file_path, content_file, name, macros)
 
 @dataclass
 class CompiledTemplate:
