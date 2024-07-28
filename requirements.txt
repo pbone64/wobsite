@@ -1,0 +1,6 @@
+html5lib==1.1
+markdown-it-py==3.0.0
+mdurl==0.1.2
+six==1.16.0
+types-html5lib==1.1.11.20240228
+webencodings==0.5.1

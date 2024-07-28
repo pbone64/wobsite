@@ -14,15 +14,17 @@ from wobsite.page import PageManifest, page_manifest_from_toml, PageCompiler
 from wobsite.template_formats import HtmlTemplateFormat
 from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 
+# TODO set up repeatable installs
+
 #### TODO configuration improvements:
 # TODO website-level output encoding option
 # TODO custom build artifact folder
 # TODO page name attribute (output page name)
 
 #### TODO code structure improvements:
+# TODO artifact path handling is incredibly cursed
 # TODO unify format & processor types
 # TODO unify manifest parsing
-# TODO artifact path handling is incredibly cursed
 
 #### TODO features:
 # TODO cli interface
