@@ -8,7 +8,7 @@ from os import path
 from wobsite.spec.manifests import site as sitespec
 from wobsite.spec.manifests import template as templatespec
 from wobsite.spec.manifests import page as pagespec
-from wobsite.site import SiteManifest, site_manifest_from_toml
+from wobsite.website import SiteManifest, site_manifest_from_toml
 from wobsite.template import CompiledTemplate, TemplateManifest, template_manifest_from_toml, TemplateCompiler
 from wobsite.page import PageManifest, page_manifest_from_toml, PageCompiler
 from wobsite.template_formats import HtmlTemplateFormat
@@ -37,6 +37,9 @@ from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 #### TODO documentation:
 # TODO write docs
 # TODO write tests
+
+# Is this seriously how generics are meant to be used? This seems wrong
+T = TypeVar('T')
 
 @dataclass(init=False)
 class Wobsite:
@@ -92,9 +95,8 @@ class Wobsite:
             
             self.__template_lookup[template.name] = template
 
-    T = TypeVar('T')
     def __build_list(self, directories: List[str], ext: str, proc: Callable[[str], T]) -> List[T]:
-        l = []
+        l: List[T] = []
 
         for directory in directories:
             directory = path.join(self.directory, directory)
