@@ -9,4 +9,7 @@ class HtmlTemplateFormat(TemplateFormat):
         super().__init__(["html", "htm"])
 
     def compile_template(self, manifest: TemplateManifest, file: IO[str]) -> minidom.Document:
-        return html5lib.parse(file, treebuilder="dom")
+        try:
+            return html5lib.parse(file, treebuilder="dom")
+        except Exception as e:
+            raise Exception(f"Could not parse HTML template {manifest.content_file_path}") from e

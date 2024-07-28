@@ -10,7 +10,10 @@ class HtmlPageFormat(PageFormat):
         super().__init__(["html", "htm"])
 
     def compile_page(self, manifest: PageManifest, file: IO[str]) -> minidom.DocumentFragment:
-        return html5lib.parseFragment(file, treebuilder="dom")
+        try:
+            return html5lib.parseFragment(file, treebuilder="dom")
+        except Exception as e:
+            raise Exception(f"Could not parse HTML page {manifest.content_file_path}") from e
 
 class MdPageFormat(PageFormat):
     md: MarkdownIt
@@ -21,4 +24,7 @@ class MdPageFormat(PageFormat):
 
     def compile_page(self, manifest: PageManifest, file: IO[str]) -> minidom.DocumentFragment:
         # TODO suboptimal. I would like to directly render a DocumentFragment from md
-        return html5lib.parseFragment(self.md.render(file.read()), treebuilder="dom")
+        try:
+            return html5lib.parseFragment(self.md.render(file.read()), treebuilder="dom")
+        except Exception as e:
+            raise Exception(f"Could not parse Markdown page {manifest.content_file_path}") from e

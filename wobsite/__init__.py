@@ -16,21 +16,22 @@ from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 
 
 #### TODO configuration improvements:
-# TODO website-level output encoding option
 # TODO custom build artifact folder
 # TODO page name attribute (output page name)
+# TODO website-level output encoding option
 
 #### TODO code structure improvements:
 # TODO artifact path handling is incredibly cursed
+# TODO better errors
 # TODO unify format & processor types
 # TODO unify manifest parsing
 
 #### TODO features:
 # TODO asset folder handling
-# TODO cli interface
+# TODO warn about improper manifest rather than failing
+# TODO toml attribute type validation
 # TODO macro expansion
 # TODO incremental builds
-# TODO toml attribute type validation
 
 #### TODO documentation:
 # TODO write docs
@@ -49,15 +50,33 @@ class Wobsite:
 
     def __init__(self, path: str):
         self.directory = os.path.realpath(os.path.basename(path))
-        self.manifest = site_manifest_from_toml(os.path.join(self.directory, sitespec.FILE_NAME))
 
-        self.templates = self.__build_list(self.manifest.template_directories, templatespec.FILE_EXT, template_manifest_from_toml)
+        site_manifest_path = os.path.join(self.directory, sitespec.FILE_NAME)
 
-        self.pages = self.__build_list(
-            self.manifest.page_directories,
-            pagespec.FILE_EXT,
-            page_manifest_from_toml
-        )
+        try:
+            self.manifest = site_manifest_from_toml(site_manifest_path)
+        except FileNotFoundError as e:
+            raise Exception(f"{self.directory} does not contain a site manifest (wobsite.toml)")
+        except Exception as e:
+            raise Exception(f"Could not parse site manifest at {site_manifest_path}") from e
+
+        try:
+            self.templates = self.__build_list(
+                self.manifest.template_directories,
+                templatespec.FILE_EXT,
+                template_manifest_from_toml
+            )
+        except Exception as e:
+            raise Exception(f"Could not parse template manifests") from e
+
+        try:
+            self.pages = self.__build_list(
+                self.manifest.page_directories,
+                pagespec.FILE_EXT,
+                page_manifest_from_toml
+            )
+        except Exception as e:
+            raise Exception(f"Could not parse page manifests") from e
 
         self.__template_lookup = {}
         self.__compiled_templates = {}
