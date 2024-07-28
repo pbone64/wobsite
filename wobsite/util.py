@@ -23,12 +23,12 @@ class TomlKey:
         table = toml
         for t in self.table:
             if t not in table:
-                raise Exception
+                raise Exception(f"{self.full_path()} not found")
 
             table = table[t]
 
         if self.key not in table:
-            raise Exception
+            raise Exception(f"{self.full_path()} not found")
 
         return table[self.key]
     

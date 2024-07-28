@@ -14,7 +14,6 @@ from wobsite.page import PageManifest, page_manifest_from_toml, PageCompiler
 from wobsite.template_formats import HtmlTemplateFormat
 from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 
-
 #### TODO configuration improvements:
 # TODO custom build artifact folder
 # TODO page name attribute (output page name)
