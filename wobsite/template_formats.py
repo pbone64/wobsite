@@ -1,6 +1,7 @@
 from typing import IO
-from xml.dom import minidom
-import html5lib
+
+from lxml import html
+from lxml.etree import _ElementTree # type: ignore
 
 from wobsite.template import TemplateManifest, TemplateFormat
 
@@ -8,8 +9,8 @@ class HtmlTemplateFormat(TemplateFormat):
     def __init__(self) -> None:
         super().__init__(["html", "htm"])
 
-    def compile_template(self, manifest: TemplateManifest, file: IO[str]) -> minidom.Document:
+    def compile_template(self, manifest: TemplateManifest, file: IO[str]) -> _ElementTree:
         try:
-            return html5lib.parse(file, treebuilder="dom") # type: ignore
+            return html.parse(file)
         except Exception as e:
             raise Exception(f"Could not parse HTML template {manifest.content_file_path}") from e

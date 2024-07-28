@@ -3,12 +3,13 @@ from abc import abstractmethod
 from dataclasses import dataclass
 
 from os import path
-from copy import deepcopy
 
 import tomllib
-from xml.dom.minidom import Document, DocumentFragment
+from lxml import etree
+from lxml.html import HtmlElement
+from lxml.etree import _ElementTree, _Element # type: ignore
 
-from wobsite.spec import template_elements
+from wobsite.spec import custom_elements
 from wobsite.spec.manifests import template as templatespec
 
 @dataclass
@@ -46,20 +47,25 @@ def template_manifest_from_toml(file_path: str) -> TemplateManifest:
 @dataclass
 class CompiledTemplate:
     manifest: TemplateManifest
-    document: Document
+    document: _ElementTree
 
-    def clone(self) -> "CompiledTemplate":
-        return CompiledTemplate(
-            self.manifest,
-            deepcopy(self.document)
-        )
-    
-    def substitute_content(self, page_content: DocumentFragment) -> None:
-        for node in self.document.getElementsByTagName(template_elements.PAGE_CONTENT_ELEMENT):
-            node.parentNode.replaceChild(page_content, node)
+    def substitute_content(self, page_content: HtmlElement) -> None:
+        placeholder = self.document.find(f".//{custom_elements.PAGE_CONTENT_PLACEHOLDER_ELEMENT}")
 
-    def text(self) -> str:
-        return self.document.toprettyxml()
+        if placeholder is None:
+            print(f"warn: Template {self.manifest.name} does not contain wobsite-page-content-placeholder")
+            return
+        
+        parent = placeholder.getparent()
+
+        # TODO double-check that parent is only None when the element is root
+        if parent is None:
+            self.document._setroot(placeholder)
+        else:
+            parent.replace(placeholder, page_content)
+
+    def tostring(self) -> str:
+        return etree.tostring(self.document, encoding="unicode", method="html")
 
 class TemplateFormat:
     extensions: List[str]
@@ -68,7 +74,7 @@ class TemplateFormat:
         self.extensions = extensions
 
     @abstractmethod
-    def compile_template(self, manifest: TemplateManifest, file: IO[str]) -> Document:
+    def compile_template(self, manifest: TemplateManifest, file: IO[str]) -> _ElementTree:
         pass
 
 class TemplateCompiler:

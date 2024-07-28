@@ -9,7 +9,7 @@ from wobsite.spec.manifests import site as sitespec
 from wobsite.spec.manifests import template as templatespec
 from wobsite.spec.manifests import page as pagespec
 from wobsite.website import SiteManifest, site_manifest_from_toml
-from wobsite.template import CompiledTemplate, TemplateManifest, template_manifest_from_toml, TemplateCompiler
+from wobsite.template import TemplateManifest, template_manifest_from_toml, TemplateCompiler
 from wobsite.page import PageManifest, page_manifest_from_toml, PageCompiler
 from wobsite.template_formats import HtmlTemplateFormat
 from wobsite.page_formats import HtmlPageFormat, MdPageFormat
@@ -26,7 +26,6 @@ from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 # TODO unify manifest parsing
 
 #### TODO features:
-# TODO asset folder handling
 # TODO warn about improper manifests rather than failing
 # TODO toml attribute type validation
 # TODO macro expansion
@@ -48,7 +47,6 @@ class Wobsite:
     pages: List[PageManifest]
 
     __template_lookup: Dict[str, TemplateManifest]
-    __compiled_templates: Dict[str, CompiledTemplate]
 
     def __init__(self, path: str):
         self.directory = os.path.realpath(os.path.basename(path))
@@ -81,7 +79,6 @@ class Wobsite:
             raise Exception(f"Could not parse page manifests") from e
 
         self.__template_lookup = {}
-        self.__compiled_templates = {}
 
         for template in self.templates:
             if template.name in self.__template_lookup:
@@ -122,9 +119,12 @@ class Wobsite:
                 else:
                     compiled_page = page_compiler.compile(page)
 
-                    template = self.__instantiate_template(page.template, template_compiler).clone()
+                    if page.template not in self.__template_lookup:
+                        raise Exception(f"Template {page.template} request by page {page.manifest_file_path} does not exist.")
+
+                    template = template_compiler.compile(self.__template_lookup[page.template])
                     template.substitute_content(compiled_page.content)
-                    output = template.text()
+                    output = template.tostring()
 
                 self.__write_build_artifact(f"{page.output_file_name}.html", output)
             except Exception as e:
@@ -142,15 +142,6 @@ class Wobsite:
                 shutil.copytree(asset_path, output_dir)
             except Exception as e:
                 raise Exception(f"Error while copying asset folder {asset_dir}") from e
-
-    def __instantiate_template(self, name: str, template_compiler: TemplateCompiler) -> CompiledTemplate:
-        if name not in self.__compiled_templates:
-            if name not in self.__template_lookup:
-                raise ValueError(f"Template {name} not found")
-
-            self.__compiled_templates[name] = template_compiler.compile(self.__template_lookup[name])
-
-        return self.__compiled_templates[name].clone()
 
     def __artifact_path(self) -> str:
         return path.join(self.directory, self.manifest.output_directory)

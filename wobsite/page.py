@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from os import path
 
 import tomllib
-from xml.dom.minidom import DocumentFragment
+from lxml.html import HtmlElement
 
 from wobsite.spec.manifests import page as pagespec
 
@@ -50,7 +50,7 @@ def page_manifest_from_toml(file_path: str) -> PageManifest:
 @dataclass
 class CompiledPage:
     manifest: PageManifest
-    content: DocumentFragment
+    content: HtmlElement
 
 class PageFormat:
     extensions: List[str]
@@ -59,7 +59,7 @@ class PageFormat:
         self.extensions = extensions
 
     @abstractmethod
-    def compile_page(self, manifest: PageManifest, file: IO[str]) -> DocumentFragment:
+    def compile_page(self, manifest: PageManifest, file: IO[str]) -> HtmlElement:
         pass
 
 class PageCompiler:
