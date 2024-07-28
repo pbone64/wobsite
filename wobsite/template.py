@@ -51,7 +51,7 @@ class CompiledTemplate:
             deepcopy(self.document)
         )
     
-    def substitute_content(self, page_content: DocumentFragment):
+    def substitute_content(self, page_content: DocumentFragment) -> None:
         for node in self.document.getElementsByTagName(template_elements.PAGE_CONTENT_ELEMENT):
             node.parentNode.replaceChild(page_content, node)
 

@@ -103,7 +103,7 @@ class Wobsite:
 
         return l
 
-    def compile(self):
+    def compile(self) -> None:
         template_compiler = TemplateCompiler([ HtmlTemplateFormat() ])
         page_compiler = PageCompiler([ HtmlPageFormat(), MdPageFormat() ])
 
@@ -115,7 +115,7 @@ class Wobsite:
         for page in self.pages:
             print(f"Compiling page {page.content_file_path}")
             try:
-                if page.template == None:
+                if page.template is None:
                     output = page.open_content_file().read()
                 else:
                     compiled_page = page_compiler.compile(page)
@@ -128,7 +128,7 @@ class Wobsite:
             except Exception as e:
                 raise Exception(f"Error while compiling {page.content_file_path}.") from e
 
-    def __instantiate_template(self, name: str, template_compiler: TemplateCompiler):
+    def __instantiate_template(self, name: str, template_compiler: TemplateCompiler) -> CompiledTemplate:
         if name not in self.__compiled_templates:
             if name not in self.__template_lookup:
                 raise ValueError(f"Template {name} not found")
@@ -137,10 +137,10 @@ class Wobsite:
 
         return self.__compiled_templates[name].clone()
 
-    def __artifact_path(self):
+    def __artifact_path(self) -> str:
         return path.join(self.directory, ".build")
 
-    def __write_build_artifact(self, file_name: str, text: str):
+    def __write_build_artifact(self, file_name: str, text: str) -> None:
         artifact_path = path.join(self.__artifact_path(), file_name)
 
         if path.exists(artifact_path):

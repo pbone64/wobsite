@@ -48,4 +48,4 @@ def __get_directories_list(toml: Dict[str, Any], key: TomlKey) -> List[str]:
     elif isinstance(value, list):
         return value
     else:
-        raise Exception("Unsupported type")
+        raise Exception(f"Unsupported directory list type {type(value)}")

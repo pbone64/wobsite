@@ -32,8 +32,7 @@ class TomlKey:
 
         return table[self.key]
     
-    T = TypeVar('T')
-    def get_or_default_in(self, toml: Dict[str, Any], default: T) -> T:
+    def get_or_default_in(self, toml: Dict[str, Any], default: Any) -> Any:
         try:
             return self.get_in(toml)
         except:
