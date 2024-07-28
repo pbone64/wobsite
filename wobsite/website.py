@@ -55,7 +55,8 @@ def __get_directories_list(toml: Dict[str, Any], key: TomlKey) -> List[str]:
     value = key.get_in(toml)
     if isinstance(value, str):
         return [value]
-    elif type(value) is List[str]:
-        return value
+    elif isinstance(value, list):
+        # tomllib doesn't support typed lists, so we have to process that it's str
+        return [str(i) for i in value] # type: ignore
     else:
         raise Exception(f"Unsupported directory list type {type(value)}")

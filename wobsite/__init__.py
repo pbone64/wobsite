@@ -142,7 +142,7 @@ class Wobsite:
         return self.__compiled_templates[name].clone()
 
     def __artifact_path(self) -> str:
-        return path.join(self.directory, ".build")
+        return path.join(self.directory, self.manifest.output_directory)
 
     def __write_build_artifact(self, file_name: str, text: str) -> None:
         artifact_path = path.join(self.__artifact_path(), file_name)
