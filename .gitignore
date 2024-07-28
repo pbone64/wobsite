@@ -9,4 +9,4 @@ pyvenv.cfg
 **/__pycache__
 
 # wobsite
-example/.build
+**/build

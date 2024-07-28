@@ -37,7 +37,7 @@ def site_manifest_from_toml(file_path: str) -> SiteManifest:
     template_directories = __get_directories_list(toml, sitespec.TEMPLATES_DIRECTORIES_KEY)
     page_directories = __get_directories_list(toml, sitespec.PAGES_DIRECTORIES_KEY)
     asset_directories = __get_directories_list(toml, sitespec.ASSETS_DIRECTORIES_KEY)
-    output_directory = sitespec.OUTPUT_DIRECTORY_KEY.get_or_default_in(toml, ".build")
+    output_directory = sitespec.OUTPUT_DIRECTORY_KEY.get_or_default_in(toml, "build")
 
     macro_values: Dict[str, Any] = sitespec.MACROS_TABLE.get_or_default_in(toml, {})
 
