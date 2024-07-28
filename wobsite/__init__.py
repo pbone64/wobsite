@@ -17,8 +17,6 @@ from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 #### TODO switch from html5lib + minidom to lxml
 
 #### TODO configuration improvements:
-# TODO custom build artifact folder
-# TODO page name attribute (output page name)
 # TODO website-level output encoding option
 
 #### TODO code structure improvements:
@@ -128,7 +126,7 @@ class Wobsite:
                     template.substitute_content(compiled_page.content)
                     output = template.text()
 
-                self.__write_build_artifact(f"{path.splitext(path.basename(page.content_file_path))[0]}.html", output)
+                self.__write_build_artifact(f"{page.output_file_name}.html", output)
             except Exception as e:
                 raise Exception(f"Error while compiling {page.content_file_path}.") from e
 

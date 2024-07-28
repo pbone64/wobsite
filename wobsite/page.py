@@ -16,6 +16,7 @@ class PageManifest:
     manifest_file_path: str
     content_file_path: str
 
+    output_file_name: str
     template: None | str
     macro_values: Dict[str, Any]
 
@@ -31,12 +32,18 @@ def page_manifest_from_toml(file_path: str) -> PageManifest:
     with open(file_path, "rb") as file:
         toml = tomllib.load(file)
 
-    template = pagespec.TEMPLATE_KEY.get_or_default_in(toml, None)
     content_file = pagespec.FILE_KEY.get_in(toml)
+    content_file_path =  path.join(directory, content_file)
 
+    output_file = pagespec.OUTPUT_KEY.get_or_default_in(
+        toml,
+        path.splitext(path.basename(content_file))[0]
+    )
+
+    template = pagespec.TEMPLATE_KEY.get_or_default_in(toml, None)
     macro_values: Dict[str, Any] = pagespec.MACROS_TABLE.get_or_default_in(toml, {})
 
-    return PageManifest(file_path, path.join(directory, content_file), template, macro_values)
+    return PageManifest(file_path, content_file_path, output_file, template, macro_values)
 
 @dataclass
 class CompiledPage:

@@ -5,4 +5,3 @@ name = "Wobsite Example"
 pages = "pages"
 templates = "templates"
 assets = [ "img", "css" ]
-output = "newbuild"

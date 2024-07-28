@@ -1,6 +1,7 @@
 [page]
 file = "index.html"
 template = "default"
+output = "home"
 
 [macros]
 title = "Homepage"

@@ -8,5 +8,6 @@ FILE_EXT: Final[str] = "page.toml"
 PAGE_TABLE: Final[TomlKey] = TomlKey("page")
 FILE_KEY: Final[TomlKey] = PAGE_TABLE.sub("file")
 TEMPLATE_KEY: Final[TomlKey] = PAGE_TABLE.sub("template")
+OUTPUT_KEY: Final[TomlKey] = PAGE_TABLE.sub("output")
 
 MACROS_TABLE: Final[TomlKey] = __common.TABLE_MACROS
