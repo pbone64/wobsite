@@ -61,7 +61,7 @@ class CompiledTemplate:
 class TemplateFormat:
     extensions: List[str]
 
-    def __init__(self, extensions: List[str]):
+    def __init__(self, extensions: List[str]) -> None:
         self.extensions = extensions
 
     @abstractmethod
@@ -72,7 +72,7 @@ class TemplateCompiler:
     formats: List[TemplateFormat]
     __ext_lookup: Dict[str, TemplateFormat]
 
-    def __init__(self, formats: List[TemplateFormat]):
+    def __init__(self, formats: List[TemplateFormat]) -> None:
         self.formats = formats
 
         self.__ext_lookup = {}

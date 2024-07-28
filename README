@@ -15,3 +15,6 @@ It aims to:
 
 # Usage
 Currently, wobsite is only available as a library. A cli application is planned.
+
+# Contributing
+All required libraries are specified in requirements.txt. Additionally, I highly recommend using the mypy static type checker.

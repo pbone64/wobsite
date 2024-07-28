@@ -46,7 +46,7 @@ class CompiledPage:
 class PageFormat:
     extensions: List[str]
 
-    def __init__(self, extensions: List[str]):
+    def __init__(self, extensions: List[str]) -> None:
         self.extensions = extensions
 
     @abstractmethod
@@ -57,7 +57,7 @@ class PageCompiler:
     formats: List[PageFormat]
     __ext_lookup: Dict[str, PageFormat]
 
-    def __init__(self, formats: List[PageFormat]):
+    def __init__(self, formats: List[PageFormat]) -> None:
         self.formats = formats
 
 

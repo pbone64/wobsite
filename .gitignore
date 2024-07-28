@@ -5,6 +5,8 @@ lib
 lib64
 pyvenv.cfg
 
-## Python general
+# python general
 **/__pycache__
+
+# python linters
 .mpypy_cache
