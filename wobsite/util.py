@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Self, List, Dict, TypeVar
+from typing import Any, List, Dict, TypeVar
 
 @dataclass(init=False)
 class TomlKey:

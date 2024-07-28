@@ -11,7 +11,10 @@ parser = ArgumentParser(
     description="A dumb static site generator"
 )
 
-parser.add_argument("directory", help="The website directory (folder containing wobsite.toml)")
+parser.add_argument(
+    "directory",
+    help="The website directory (folder containing wobsite.toml)"
+)
 
 args = parser.parse_args()
 

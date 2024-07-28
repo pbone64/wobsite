@@ -17,4 +17,4 @@ It aims to:
 Currently, wobsite is only available as a library. A cli application is planned.
 
 # Contributing
-All required libraries are specified in requirements.txt. Additionally, I highly recommend using the mypy static type checker.
+All required libraries are specified in requirements.txt. Additionally, I recommend a type checker such as mypy or Pylance with strict typing enabled
