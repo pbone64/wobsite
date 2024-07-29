@@ -15,9 +15,6 @@ from wobsite.page import PageManifest, page_manifest_from_toml, PageCompiler
 from wobsite.template_formats import HtmlTemplateFormat
 from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 
-#### TODO configuration improvements:
-# TODO website-level output encoding option
-
 #### TODO code structure improvements:
 # TODO artifact path handling is slightly cursed
 # TODO better errors
