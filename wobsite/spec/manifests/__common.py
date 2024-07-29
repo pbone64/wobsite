@@ -1,7 +1,7 @@
-from wobsite.util import TomlKey
+from wobsite.util import DefaultedTomlKey
 from typing import Final
 
-TABLE_MACROS: Final[TomlKey] = TomlKey("macros")
+TABLE_MACROS: Final[DefaultedTomlKey] = DefaultedTomlKey({}, "macros")
 
 # Macro Contexts #
 # MACRO_CTX_WEBSITE: str = "site"
