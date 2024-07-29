@@ -2,9 +2,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, TypeVar, Generic, overload
 
+from wobsite.site import SiteManifest
+
 @dataclass
 class WobsiteCompilation:
-    pass
+    manifest: SiteManifest
 
 @dataclass
 class CompiledWobsite:
@@ -24,8 +26,7 @@ class Target(Generic[IN, OUT], ABC):
         self.__init__(input)
 
     def __init__(self, input) -> None: # type: ignore
-        pass
-
+        self.input = input
 
     input: "Target[object, IN]" | IN
     __is_input_target: bool
