@@ -1,8 +1,34 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, TypeVar, Generic, overload
 
+from lxml.html import HtmlElement
+
 from wobsite.site import SiteManifest
+from wobsite.spec.manifests.page import PageManifest
+
+IN = TypeVar("IN", contravariant=True)
+OUT = TypeVar("OUT", covariant=True)
+
+@dataclass
+class ParsedPage:
+    manifest: PageManifest
+    content: HtmlElement
+
+class ContentParser(Generic[OUT], ABC):
+    supported_extensions: List[str]
+
+    @abstractmethod
+    def __init__(self, supported_extensions: str | List[str]):
+        if isinstance(supported_extensions, str):
+            self.supported_extensions = [supported_extensions]
+        else:
+            self.supported_extensions = supported_extensions
+
+    @abstractmethod
+    def parse_content(self, content_file: Path) -> ParsedPage:
+        pass
 
 @dataclass
 class WobsiteCompilation:
@@ -12,8 +38,6 @@ class WobsiteCompilation:
 class CompiledWobsite:
     pages: List[object]
 
-IN = TypeVar("IN", contravariant=True)
-OUT = TypeVar("OUT", covariant=True)
 class Target(Generic[IN, OUT], ABC):
     @overload
     def __init__(self, input: "Target[object, IN]") -> None:

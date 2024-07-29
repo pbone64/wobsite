@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Final
 
 from wobsite.util import DefaultedTomlKey, RequiredTomlKey, TomlKey, TomlTable
@@ -16,6 +17,8 @@ MACROS_TABLE: Final[DefaultedTomlKey[TomlTable]] = __common.TABLE_MACROS
 @dataclass
 class PageManifest:
     """Data structure represented by a .page.toml file"""
+
+    path: Path
 
     file: str
     template: str
