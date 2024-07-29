@@ -28,7 +28,7 @@ class PageManifest:
 def page_manifest_from_toml(file_path: str) -> PageManifest:
     if not path.isfile(file_path):
         raise FileNotFoundError(f"{file_path} does not exist")
-    
+
     directory = path.realpath(path.dirname(file_path))
 
     with open(file_path, "rb") as file:
