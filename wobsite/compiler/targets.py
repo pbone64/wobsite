@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Generic, Tuple, TypeVar, override
+from typing import Any, Callable, Generic, Optional, Tuple, TypeVar, override
 
 from lxml import html
 from lxml.html import builder as E
@@ -20,47 +20,66 @@ HTML_TAG_PAGE_PLACEHOLDER = "wobsite-page-placeholder"
 OUT1 = TypeVar("OUT1")
 OUT2 = TypeVar("OUT2")
 class AssembleTuple(Generic[OUT1, OUT2], LeafTarget[Tuple[OUT1, OUT2]]):
-    input_1: Target[object, OUT1]
-    input_2: Target[object, OUT2]
+    input_1: Target[Any, OUT1]
+    input_2: Target[Any, OUT2]
 
-    def __init__(self, input_1: Target[object, OUT1], input_2: Target[object, OUT2]) -> None:
+    def __init__(self, input_1: Target[Any, OUT1], input_2: Target[Any, OUT2]) -> None:
         self.input_1 = input_1
         self.input_2 = input_2
 
+        super().__init__()
+
     @override
-    def resolve(self, ctx: WobsiteCompilation) -> Tuple[OUT1, OUT2]:
+    def _resolve(self, input: None, ctx: WobsiteCompilation) -> Tuple[OUT1, OUT2]:
         return (
             self.input_1.resolve(ctx), self.input_2.resolve(ctx)
         )
 
-# meta keys
+class ConditionallyAssembleTuple(Generic[OUT1, OUT2], AssembleTuple[OUT1, Optional[OUT2]]):
+    condition: Callable[[OUT1], bool]
 
+    def __init__(self, input_1: Target[Any, OUT1], condition: Callable[[OUT1], bool], input_2: Target[Any, OUT2]) -> None:
+        self.condition = condition
+
+        super().__init__(input_1, input_2)
+
+    @override
+    def _resolve(self, input: None, ctx: WobsiteCompilation) -> Tuple[OUT1, Optional[OUT2]]:
+        c = self.input_1.resolve(ctx)
+
+        if self.condition(c):
+            return (c, self.input_2.resolve(ctx))
+        else:
+            return (c, None)
+
+OUT = TypeVar("OUT")
+class ValueLeaf(Generic[OUT], LeafTarget[OUT]):
+    value: OUT
+
+    def __init__(self, value: OUT) -> None:
+        self.value = value
+
+    def _resolve(self, input: None, ctx: WobsiteCompilation) -> OUT:
+        return self.value
+
+# meta keys
 class BuildOutputPage(Target[Tuple[ParsedPage, ParsedTemplate | None], OutputPage]):
     @override
     def _resolve(self, input: Tuple[ParsedPage, ParsedTemplate | None], ctx: WobsiteCompilation) -> OutputPage:
-        path = Path("")
-
         page = input[0]
         template = input[1]
 
+        path = ctx.get_output_dir().joinpath(page.meta.output_file)
+
+        page_content = E.DIV(page.content)
+        page_content.set("id", "wobsite-page-content")
+
         if not template:
-            if len(page.content) < 1:
-                # If page content is empty and no template is defined, create an empty <html></html> tag as content
-                return OutputPage(
-                    content = E.HTML(),
-                    path = path
-                )
-            elif len(page.content) == 1:
-                return OutputPage(
-                    content = page.content[0],
-                    path = path
-                )
-            else:
-                return OutputPage(
-                    content = E.HTML(page.content),
-                    path = path
-                )
-            
+            return OutputPage(
+                content = page_content,
+                path = path
+            )
+
         document = template.content
 
         e = document.find(f".//{HTML_TAG_PAGE_PLACEHOLDER}")
@@ -71,9 +90,18 @@ class BuildOutputPage(Target[Tuple[ParsedPage, ParsedTemplate | None], OutputPag
             p = e.getparent()
 
             if not p:
-                pass #TODO
+                # If the placeholder element is the root, then disregard the template content entirely
+                return OutputPage(
+                    content = page_content,
+                    path = path
+                )
+            else:
+                p.replace(e, page_content)
 
-        return super()._resolve(input, ctx)
+        return OutputPage(
+            content = page_content,
+            path = path
+        )
 
 # HTML parsers
 class ParseHtmlPage(Target[Path, ParsedPage]):
@@ -89,13 +117,19 @@ class ParseHtmlPage(Target[Path, ParsedPage]):
         meta_elem = fragment.find(f".//{HTML_TAG_PAGE_META}")
 
         if meta_elem:
-            template = meta_elem.attrib.get(HTML_ATTRIB_PAGE_META_TEMPLATE)
-            output_file = meta_elem.attrib.get(HTML_ATTRIB_PAGE_META_OUTPUT_FILE)
-            meta = PageMeta(input, template, output_file)
+            template = meta_elem.get(HTML_ATTRIB_PAGE_META_TEMPLATE)
+            output_file = meta_elem.get(HTML_ATTRIB_PAGE_META_OUTPUT_FILE)
+
+            if output_file:
+                output_file = ctx.get_output_dir().joinpath(output_file)
+            else:
+                output_file = ctx.get_output_dir().joinpath(input.name)
+
+            meta = PageMeta(template, output_file)
 
             fragment.remove(meta_elem)
         else:
-            meta = PageMeta(input)
+            meta = PageMeta(None, input)
 
         return ParsedPage(
             meta = meta,
@@ -113,7 +147,7 @@ class ParseHtmlTemplate(Target[Path, ParsedTemplate]):
         meta_elem = document.find(f".//{HTML_TAG_TEMPLATE_META}")
 
         if meta_elem:
-            name = meta_elem.attrib.get(HTML_ATTRIB_TEMPLATE_META_NAME)
+            name = meta_elem.get(HTML_ATTRIB_TEMPLATE_META_NAME)
             meta = TemplateMeta(name)
 
             parent = meta_elem.getparent()
@@ -127,3 +161,17 @@ class ParseHtmlTemplate(Target[Path, ParsedTemplate]):
             meta = meta,
             content = document
         )
+
+test = BuildOutputPage(
+    input = ConditionallyAssembleTuple[ParsedPage, ParsedTemplate](
+        condition = lambda page : page.meta.template is not None,
+
+        input_1 = ParseHtmlPage(
+            input = ValueLeaf(Path(""))
+        ),
+
+        input_2 = ParseHtmlTemplate(
+            input = ValueLeaf(Path(""))
+        )
+    )
+)
