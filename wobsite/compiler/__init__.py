@@ -1,23 +1,48 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Final, List, Optional, TypeVar, Generic, overload
+from pathlib import Path
+from typing import List, Optional, TypeVar, Generic, overload
 
 from lxml.html import HtmlElement
 
 IN = TypeVar("IN", contravariant=True)
 OUT = TypeVar("OUT", covariant=True)
 
-@dataclass
+@dataclass(init=False)
 class PageMeta:
-    template: Optional[str]
-    output_file: Optional[str]
+    template: Optional[str] = None
+    output_file: str
 
-DEFAULT_PAGE_META: Final[PageMeta] = PageMeta(None, None)
+    def __init__(self, page_path: Path, template: Optional[str] = None, output_file: Optional[str] = None) -> None:
+        self.template = template
+
+        if output_file:
+            self.output_file = output_file
+        else:
+            self.output_file = page_path.name
 
 @dataclass
 class ParsedPage:
     meta: PageMeta
+    content: List[HtmlElement]
+
+@dataclass
+class TemplateMeta:
+    name: Optional[str] = None
+
+@dataclass
+class ParsedTemplate:
+    meta: TemplateMeta
     content: HtmlElement
+
+@dataclass
+class OutputPage:
+    content: HtmlElement
+    path: Path
+
+@dataclass
+class WebsiteMeta:
+    output_dir: Optional[str] = None
 
 @dataclass
 class WobsiteCompilation:

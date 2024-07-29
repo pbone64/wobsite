@@ -1,4 +1,2 @@
-[site]
-pages = "pages"
-templates = "templates"
-assets = "img"
+[site.pages]
+index = { tempate = "templates/default.html", content = "pages/home.html" }
