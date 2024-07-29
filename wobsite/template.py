@@ -97,10 +97,10 @@ class TemplateFormat:
         self.extensions = extensions
 
     @abstractmethod
-    def compile_template(self, manifest: TemplateManifest, file: IO[str]) -> _ElementTree:
+    def parse_template(self, manifest: TemplateManifest, file: IO[str]) -> _ElementTree:
         pass
 
-class TemplateCompiler:
+class TemplateParser:
     formats: List[TemplateFormat]
     __ext_lookup: Dict[str, TemplateFormat]
 
@@ -125,9 +125,9 @@ class TemplateCompiler:
     def format_supported(self, ext: str) -> bool:
         return ext in self.__ext_lookup
     
-    def compile(self, manifest: TemplateManifest) -> CompiledTemplate:
+    def parse(self, manifest: TemplateManifest) -> CompiledTemplate:
         ext = path.splitext(manifest.content_file_path)[1]
         parser = self.format_from_ext(ext)
 
         with manifest.open_content_file() as file:
-            return CompiledTemplate(manifest, parser.compile_template(manifest, file))
+            return CompiledTemplate(manifest, parser.parse_template(manifest, file))

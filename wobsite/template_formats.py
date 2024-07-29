@@ -9,7 +9,7 @@ class HtmlTemplateFormat(TemplateFormat):
     def __init__(self) -> None:
         super().__init__(["html", "htm"])
 
-    def compile_template(self, manifest: TemplateManifest, file: IO[str]) -> _ElementTree:
+    def parse_template(self, manifest: TemplateManifest, file: IO[str]) -> _ElementTree:
         try:
             return html.parse(file)
         except Exception as e:

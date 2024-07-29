@@ -9,9 +9,9 @@ from wobsite.macro import MacroStack
 from wobsite.spec.manifests import site as sitespec
 from wobsite.spec.manifests import template as templatespec
 from wobsite.spec.manifests import page as pagespec
-from wobsite.website import SiteManifest, site_manifest_from_toml
-from wobsite.template import TemplateManifest, template_manifest_from_toml, TemplateCompiler
-from wobsite.page import PageManifest, page_manifest_from_toml, PageCompiler
+from wobsite.site import SiteManifest, site_manifest_from_toml
+from wobsite.template import TemplateManifest, template_manifest_from_toml, TemplateParser
+from wobsite.page import PageManifest, page_manifest_from_toml, PageParser
 from wobsite.template_formats import HtmlTemplateFormat
 from wobsite.page_formats import HtmlPageFormat, MdPageFormat
 
@@ -106,8 +106,8 @@ class Wobsite:
         comp_log.info(f"Compiling {self.directory}")
         comp_log.indent()
 
-        template_compiler = TemplateCompiler([ HtmlTemplateFormat() ])
-        page_compiler = PageCompiler([ HtmlPageFormat(), MdPageFormat() ])
+        template_compiler = TemplateParser([ HtmlTemplateFormat() ])
+        page_compiler = PageParser([ HtmlPageFormat(), MdPageFormat() ])
 
         macros = MacroStack()
 
@@ -130,7 +130,7 @@ class Wobsite:
 
                 template = self.__template_lookup[page.template]
                 comp_log.info(f"Parsing template content '{template.content_file}'")
-                compiled_template = template_compiler.compile(template)
+                compiled_template = template_compiler.parse(template)
                 macros.push(template.macro_values)
             except Exception as e:
                 raise Exception(f"Error while compiling template '{page.template}'") from e
@@ -139,7 +139,7 @@ class Wobsite:
             comp_log.info(f"Parsing page content '{page.content_file_path}'")
             comp_log.indent()
             try:
-                compiled_page = page_compiler.compile(page)
+                compiled_page = page_compiler.parse(page)
                 macros.push(page.macro_values)
             except Exception as e:
                 raise Exception(f"Error while compiling page '{page.manifest_file_path}'") from e

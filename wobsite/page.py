@@ -48,7 +48,7 @@ def page_manifest_from_toml(file_path: str) -> PageManifest:
     return PageManifest(file_path, content_file_path, content_file, output_file, template, macro_values)
 
 @dataclass
-class CompiledPage:
+class ParsedPage:
     manifest: PageManifest
     content: HtmlElement
 
@@ -59,10 +59,10 @@ class PageFormat:
         self.extensions = extensions
 
     @abstractmethod
-    def compile_page(self, manifest: PageManifest, file: IO[str]) -> HtmlElement:
+    def parse_page(self, manifest: PageManifest, file: IO[str]) -> HtmlElement:
         pass
 
-class PageCompiler:
+class PageParser:
     formats: List[PageFormat]
     __ext_lookup: Dict[str, PageFormat]
 
@@ -88,9 +88,9 @@ class PageCompiler:
     def format_supported(self, ext: str) -> bool:
         return ext in self.__ext_lookup
     
-    def compile(self, manifest: PageManifest) -> CompiledPage:
+    def parse(self, manifest: PageManifest) -> ParsedPage:
         ext = path.splitext(manifest.content_file_path)[1]
         parser = self.format_from_ext(ext)
 
         with manifest.open_content_file() as file:
-            return CompiledPage(manifest, parser.compile_page(manifest, file))
+            return ParsedPage(manifest, parser.parse_page(manifest, file))
