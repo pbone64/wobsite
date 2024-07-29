@@ -8,21 +8,6 @@ import tomllib
 from lxml.html import HtmlElement
 
 from wobsite.spec.manifests import page as pagespec
-
-@dataclass
-class PageManifest:
-    """Data structure represented by a .page.toml file"""
-
-    manifest_file_path: str
-    content_file_path: str
-
-    content_file: str
-    output_file_name: str
-    template: str
-    macro_values: Dict[str, Any]
-
-    def open_content_file(self) -> IO[str]:
-        return open(self.content_file_path, "rt", encoding="utf-8")
     
 
 def page_manifest_from_toml(file_path: str) -> PageManifest:
