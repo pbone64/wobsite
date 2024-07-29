@@ -1,7 +1,0 @@
-[page]
-file = "home.html"
-template = "default"
-output = "index"
-
-[macros]
-title = "Homepage"
