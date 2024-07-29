@@ -1,31 +1,31 @@
-import sys
-from os import path
+# import sys
+# from os import path
 
-from argparse import ArgumentParser
+# from argparse import ArgumentParser
 
-sys.path.append(path.join(path.dirname(__file__), path.pardir))
+# sys.path.append(path.join(path.dirname(__file__), path.pardir))
 
-from wobsite import Wobsite
+# from wobsite import Wobsite
 
-parser = ArgumentParser(
-    description="A dumb static site generator"
-)
+# parser = ArgumentParser(
+#     description="A dumb static site generator"
+# )
 
-parser.add_argument(
-    "directory",
-    help="The website directory (folder containing wobsite.toml)"
-)
+# parser.add_argument(
+#     "directory",
+#     help="The website directory (folder containing wobsite.toml)"
+# )
 
-args = parser.parse_args()
+# args = parser.parse_args()
 
-directory = args.directory
+# directory = args.directory
 
-if not path.exists(directory):
-    print(f"{directory} does not exist")
+# if not path.exists(directory):
+#     print(f"{directory} does not exist")
 
-directory = path.realpath(directory)
+# directory = path.realpath(directory)
 
-if not path.isdir(directory):
-    print(f"{directory} is not a directory")
+# if not path.isdir(directory):
+#     print(f"{directory} is not a directory")
 
-Wobsite(directory).compile()
+# Wobsite(directory).compile()

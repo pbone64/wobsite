@@ -1,18 +1,18 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional, TypeVar, Generic, overload
+from typing import Final, List, Optional, TypeVar, Generic, overload
 
 from lxml.html import HtmlElement
-
-from wobsite.site import SiteManifest
 
 IN = TypeVar("IN", contravariant=True)
 OUT = TypeVar("OUT", covariant=True)
 
 @dataclass
 class PageMeta:
-    template: str
+    template: Optional[str]
     output_file: Optional[str]
+
+DEFAULT_PAGE_META: Final[PageMeta] = PageMeta(None, None)
 
 @dataclass
 class ParsedPage:
@@ -21,7 +21,7 @@ class ParsedPage:
 
 @dataclass
 class WobsiteCompilation:
-    manifest: SiteManifest
+    pass
 
 @dataclass
 class CompiledWobsite:
