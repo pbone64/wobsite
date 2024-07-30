@@ -17,6 +17,26 @@ HTML_ATTRIB_TEMPLATE_META_NAME = "name"
 HTML_TAG_PAGE_PLACEHOLDER = "wobsite-page-placeholder"
 
 # general targets
+OUT = TypeVar("OUT")
+class ValueLeaf(Generic[OUT], LeafTarget[OUT]):
+    value: OUT
+
+    def __init__(self, value: OUT) -> None:
+        self.value = value
+
+    def _resolve(self, input: None, ctx: WobsiteCompilation) -> OUT:
+        return self.value
+
+# class RunSynchronous(RootTarget[List[RootTarget[Any]]]):
+#     depenedencies: List[Target[Any, Any]]
+
+#     def __init__(self, dependencies: List[RootTarget[Any]]) -> None:
+#         super().__init__(ValueLeaf(dependencies))
+
+#     def _resolve(self, input: List[RootTarget[Any]], ctx: WobsiteCompilation) -> None:
+#         for dep in self.depenedencies:
+#             dep.resolve(ctx)
+
 OUT1 = TypeVar("OUT1")
 OUT2 = TypeVar("OUT2")
 class AssembleTuple(Generic[OUT1, OUT2], LeafTarget[Tuple[OUT1, OUT2]]):
@@ -51,16 +71,31 @@ class ConditionallyAssembleTuple(Generic[OUT1, OUT2], AssembleTuple[OUT1, Option
             return (c, self.input_2.resolve(ctx))
         else:
             return (c, None)
+        
+# C = TypeVar("C")
+# class Conditional(Generic[C, OUT], LeafTarget[OUT]):
+#     intermediate_target: Target[Any, C]
+#     condition: Callable[[C], bool]
+#     true: Target[Any, OUT]
+#     false: Target[Any, OUT]
 
-OUT = TypeVar("OUT")
-class ValueLeaf(Generic[OUT], LeafTarget[OUT]):
-    value: OUT
+#     def __init__(self, intermediate_target: Target[Any, C], condition: Callable[[C], bool], true: Target[Any, OUT], false: Target[Any, OUT]) -> None:
+#         self.intermediate_target = intermediate_target
+#         self.condition = condition
+#         self.true = true
+#         self.false = false
 
-    def __init__(self, value: OUT) -> None:
-        self.value = value
+#         super().__init__()
 
-    def _resolve(self, input: None, ctx: WobsiteCompilation) -> OUT:
-        return self.value
+#     @override
+#     def _resolve(self, input: None, ctx: WobsiteCompilation) -> OUT:
+#         c = self.intermediate_target.resolve(ctx)
+
+#         if self.condition(c):
+#             return self.true.resolve(ctx)
+#         else:
+#             return self.false.resolve(ctx)
+
 
 # meta keys
 class BuildOutputPage(Target[Tuple[ParsedPage, ParsedTemplate | None], OutputPage]):
@@ -175,3 +210,4 @@ test = BuildOutputPage(
         )
     )
 )
+
