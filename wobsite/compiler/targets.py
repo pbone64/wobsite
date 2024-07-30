@@ -1,22 +1,14 @@
+import os.path
 from pathlib import Path
-from typing import Any, Callable, Generic, Optional, Tuple, TypeVar, override
+from typing import Any, Callable, Generic, List, Tuple, TypeVar, override
 
 from lxml import html
 from lxml.html import builder as E
 
-from wobsite.compiler import LeafTarget, OutputPage, PageMeta, ParsedPage, ParsedTemplate, Target, TemplateMeta, WobsiteCompilation
-
-# Custom elements
-HTML_TAG_PAGE_META = "wobsite-page"
-HTML_ATTRIB_PAGE_META_TEMPLATE = "template"
-HTML_ATTRIB_PAGE_META_OUTPUT_FILE = "output_file"
-
-HTML_TAG_TEMPLATE_META = "wobsite-template"
-HTML_ATTRIB_TEMPLATE_META_NAME = "name"
-
-HTML_TAG_PAGE_PLACEHOLDER = "wobsite-page-placeholder"
+from wobsite.compiler import Artifact, LeafTarget, OutputPage, PageMeta, ParsedPage, ParsedTemplate, RootTarget, Target, TemplateMeta, CompilationContext
 
 # general targets
+IN = TypeVar("IN")
 OUT = TypeVar("OUT")
 class ValueLeaf(Generic[OUT], LeafTarget[OUT]):
     value: OUT
@@ -24,18 +16,25 @@ class ValueLeaf(Generic[OUT], LeafTarget[OUT]):
     def __init__(self, value: OUT) -> None:
         self.value = value
 
-    def _resolve(self, input: None, ctx: WobsiteCompilation) -> OUT:
+    def _resolve(self, input: None, ctx: CompilationContext) -> OUT:
         return self.value
 
-# class RunSynchronous(RootTarget[List[RootTarget[Any]]]):
-#     depenedencies: List[Target[Any, Any]]
+class RunSynchronous(RootTarget[List[RootTarget[Any]]]):
+    depenedencies: List[Target[Any, Any]]
 
-#     def __init__(self, dependencies: List[RootTarget[Any]]) -> None:
-#         super().__init__(ValueLeaf(dependencies))
+    def __init__(self, dependencies: List[RootTarget[Any]]) -> None:
+        super().__init__(ValueLeaf(dependencies))
 
-#     def _resolve(self, input: List[RootTarget[Any]], ctx: WobsiteCompilation) -> None:
-#         for dep in self.depenedencies:
-#             dep.resolve(ctx)
+    def _resolve(self, input: List[RootTarget[Any]], ctx: CompilationContext) -> None:
+        for dep in self.depenedencies:
+            dep.resolve(ctx)
+
+class WriteArtifact(RootTarget[Tuple[Artifact, Path]]):
+    def _resolve(self, input: Tuple[Artifact, Path], ctx: CompilationContext) -> None:
+        artifact = input[0]
+        path = input[1]
+
+        artifact.write_to(path)
 
 OUT1 = TypeVar("OUT1")
 OUT2 = TypeVar("OUT2")
@@ -50,57 +49,30 @@ class AssembleTuple(Generic[OUT1, OUT2], LeafTarget[Tuple[OUT1, OUT2]]):
         super().__init__()
 
     @override
-    def _resolve(self, input: None, ctx: WobsiteCompilation) -> Tuple[OUT1, OUT2]:
+    def _resolve(self, input: None, ctx: CompilationContext) -> Tuple[OUT1, OUT2]:
         return (
             self.input_1.resolve(ctx), self.input_2.resolve(ctx)
         )
 
-class ConditionallyAssembleTuple(Generic[OUT1, OUT2], AssembleTuple[OUT1, Optional[OUT2]]):
-    condition: Callable[[OUT1], bool]
+class Process(Generic[IN, OUT], Target[IN, OUT]):
+    proc: Callable[[IN], OUT]
 
-    def __init__(self, input_1: Target[Any, OUT1], condition: Callable[[OUT1], bool], input_2: Target[Any, OUT2]) -> None:
-        self.condition = condition
-
-        super().__init__(input_1, input_2)
+    def __init__(self, proc: Callable[[IN], OUT], input: Target[Any, IN]) -> None:
+        self.proc = proc
+        super().__init__(input)
 
     @override
-    def _resolve(self, input: None, ctx: WobsiteCompilation) -> Tuple[OUT1, Optional[OUT2]]:
-        c = self.input_1.resolve(ctx)
+    def _resolve(self, input: IN, ctx: CompilationContext) -> OUT:
+        return self.proc(input)
+    
+class Exec(Generic[IN, OUT], Target[Target[IN, OUT], OUT]):
+    @override
+    def _resolve(self, input: Target[IN, OUT], ctx: CompilationContext) -> OUT:
+        return input.resolve(ctx)
 
-        if self.condition(c):
-            return (c, self.input_2.resolve(ctx))
-        else:
-            return (c, None)
-        
-# C = TypeVar("C")
-# class Conditional(Generic[C, OUT], LeafTarget[OUT]):
-#     intermediate_target: Target[Any, C]
-#     condition: Callable[[C], bool]
-#     true: Target[Any, OUT]
-#     false: Target[Any, OUT]
-
-#     def __init__(self, intermediate_target: Target[Any, C], condition: Callable[[C], bool], true: Target[Any, OUT], false: Target[Any, OUT]) -> None:
-#         self.intermediate_target = intermediate_target
-#         self.condition = condition
-#         self.true = true
-#         self.false = false
-
-#         super().__init__()
-
-#     @override
-#     def _resolve(self, input: None, ctx: WobsiteCompilation) -> OUT:
-#         c = self.intermediate_target.resolve(ctx)
-
-#         if self.condition(c):
-#             return self.true.resolve(ctx)
-#         else:
-#             return self.false.resolve(ctx)
-
-
-# meta keys
 class BuildOutputPage(Target[Tuple[ParsedPage, ParsedTemplate | None], OutputPage]):
     @override
-    def _resolve(self, input: Tuple[ParsedPage, ParsedTemplate | None], ctx: WobsiteCompilation) -> OutputPage:
+    def _resolve(self, input: Tuple[ParsedPage, ParsedTemplate | None], ctx: CompilationContext) -> OutputPage:
         page = input[0]
         template = input[1]
 
@@ -138,10 +110,17 @@ class BuildOutputPage(Target[Tuple[ParsedPage, ParsedTemplate | None], OutputPag
             path = path
         )
 
-# HTML parsers
+#### HTML parsers
+# Custom elements
+HTML_TAG_PAGE_META = "wobsite-page"
+HTML_ATTRIB_PAGE_META_TEMPLATE = "template"
+HTML_ATTRIB_PAGE_META_OUTPUT_FILE = "output_file"
+
+HTML_TAG_PAGE_PLACEHOLDER = "wobsite-page-placeholder"
+
 class ParseHtmlPage(Target[Path, ParsedPage]):
     @override
-    def _resolve(self, input: Path, ctx: WobsiteCompilation) -> ParsedPage:
+    def _resolve(self, input: Path, ctx: CompilationContext) -> ParsedPage:
         with input.open() as file:
             fragment = html.fragment_fromstring(
                 file.read(),
@@ -173,41 +152,83 @@ class ParseHtmlPage(Target[Path, ParsedPage]):
 
 class ParseHtmlTemplate(Target[Path, ParsedTemplate]):
     @override
-    def _resolve(self, input: Path, ctx: WobsiteCompilation) -> ParsedTemplate:
+    def _resolve(self, input: Path, ctx: CompilationContext) -> ParsedTemplate:
         with input.open() as file:
             document = html.document_fromstring(
                 file.read(),
             )
 
-        meta_elem = document.find(f".//{HTML_TAG_TEMPLATE_META}")
+        # meta_elem = document.find(f".//{HTML_TAG_TEMPLATE_META}")
 
-        if meta_elem:
-            name = meta_elem.get(HTML_ATTRIB_TEMPLATE_META_NAME)
-            meta = TemplateMeta(name)
+        # if meta_elem:
+        #     name = meta_elem.get(HTML_ATTRIB_TEMPLATE_META_NAME)
+        #     meta = TemplateMeta(name)
 
-            parent = meta_elem.getparent()
+        #     parent = meta_elem.getparent()
 
-            if parent:
-                meta_elem.remove(parent)
-        else:
-            meta = TemplateMeta()
+        #     if parent:
+        #         meta_elem.remove(parent)
+        # else:
+        #     meta = TemplateMeta()
 
         return ParsedTemplate(
-            meta = meta,
+            meta = TemplateMeta(),
             content = document
         )
 
-test = BuildOutputPage(
-    input = ConditionallyAssembleTuple[ParsedPage, ParsedTemplate](
-        condition = lambda page : page.meta.template is not None,
+class ResolveTemplatePath(Target[str, Path]):
+    @override
+    def _resolve(self, input: str, ctx: CompilationContext) -> Path:
+        return super()._resolve(input, ctx) # TODO
+    
+class MetaParsePage(Target[Path, Target[Path, ParsedPage]]):
+    @override
+    def _resolve(self, input: Path, ctx: CompilationContext) -> Target[Path, ParsedPage]:
+        if not input.is_file():
+            raise Exception(f"{input} is not a file")
 
-        input_1 = ParseHtmlPage(
-            input = ValueLeaf(Path(""))
-        ),
+        ext = os.path.splitext(input.name)
 
-        input_2 = ParseHtmlTemplate(
-            input = ValueLeaf(Path(""))
+        return super()._resolve(input, ctx) # TODO
+
+class MetaParseTemplate(Target[Path, Target[Path, ParsedTemplate]]):
+    @override
+    def _resolve(self, input: Path, ctx: CompilationContext) -> Target[Path, ParsedTemplate]:
+        if not input.is_file():
+            raise Exception(f"{input} is not a file")
+
+        ext = os.path.splitext(input.name)
+
+        return super()._resolve(input, ctx) # TODO
+
+class MetaCheckTemplate(Target[ParsedPage, LeafTarget[Tuple[ParsedPage, ParsedTemplate | None]]]):
+    @override
+    def _resolve(self, input: ParsedPage, ctx: CompilationContext) -> LeafTarget[Tuple[ParsedPage, ParsedTemplate | None]]:
+        if input.meta.template is None:
+            return ValueLeaf((input, None))
+        else:
+            return AssembleTuple[ParsedPage, ParsedTemplate | None](
+                input_1 = ValueLeaf(input),
+                input_2 = Exec(input = MetaParseTemplate(
+                    input = ResolveTemplatePath(
+                        input = ValueLeaf(input.meta.template)
+                    )
+                ))
+            )
+
+class MetaBuildPage(Target[Path, WriteArtifact]):
+    @override
+    def _resolve(self, input: Path, ctx: CompilationContext) -> WriteArtifact:
+        return WriteArtifact(
+            input = Process(
+                proc = lambda p : (p, p.path),
+
+                input = BuildOutputPage(
+                    input = Exec(input = MetaCheckTemplate(
+                        input = Exec(MetaParsePage(
+                            input = ValueLeaf(input)
+                        ))
+                    ))
+                )
+            )
         )
-    )
-)
-
