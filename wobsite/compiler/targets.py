@@ -8,8 +8,8 @@ from lxml.html import builder as E
 from wobsite.compiler import Artifact, LeafTarget, OutputPage, PageMeta, ParsedPage, ParsedTemplate, RootTarget, Target, TemplateMeta, CompilationContext
 
 # general targets
-IN = TypeVar("IN")
-OUT = TypeVar("OUT")
+IN = TypeVar("IN", contravariant=True)
+OUT = TypeVar("OUT", covariant=True)
 class ValueLeaf(Generic[OUT], LeafTarget[OUT]):
     value: OUT
 
@@ -36,8 +36,8 @@ class WriteArtifact(RootTarget[Tuple[Artifact, Path]]):
 
         artifact.write_to(path)
 
-OUT1 = TypeVar("OUT1")
-OUT2 = TypeVar("OUT2")
+OUT1 = TypeVar("OUT1", covariant=True)
+OUT2 = TypeVar("OUT2", covariant=True)
 class AssembleTuple(Generic[OUT1, OUT2], LeafTarget[Tuple[OUT1, OUT2]]):
     input_1: Target[Any, OUT1]
     input_2: Target[Any, OUT2]

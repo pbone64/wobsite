@@ -1,8 +1,4 @@
-[directory.pages]
-type = "pages"
-
-[directory.templates]
-type = "templates"
-
-[directory.img]
-type = "assets"
+[site]
+templates = "templates"
+pages = "pages"
+assets = "img"
