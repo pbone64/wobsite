@@ -1,22 +1,13 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Generic, override
+from typing import Any, Callable, List, Optional, Tuple, TypeVar, Generic, override
 
 from lxml.html import HtmlElement
 
 IN = TypeVar("IN", contravariant=True)
 OUT = TypeVar("OUT", covariant=False) # TODO Exec and RunSynchrounous don't work if OUT is covariant
 CTX = TypeVar("CTX")
-
-@dataclass
-class DiscoveryContext:
-    pass
-
-@dataclass
-class CompilationContext:
-    def get_output_dir(self) -> Path:
-        return Path("") # TODO
 
 type TargetInput[CTX, IN] = BaseTarget[CTX, Any, IN]
 class BaseTarget(Generic[CTX, IN, OUT], ABC):
@@ -47,13 +38,6 @@ class Exec(Generic[CTX, OUT], BaseTarget[CTX, BaseTarget[CTX, Any, OUT], OUT]):
     @override
     def _resolve(self, input: BaseTarget[CTX, Any, OUT], ctx: CTX) -> OUT:
         return input.resolve(ctx)
-
-class DiscoveryTarget(Generic[IN, OUT], BaseTarget[DiscoveryContext, IN, OUT]):
-    pass
-
-class CompileTarget(Generic[IN, OUT], BaseTarget[CompilationContext, IN, OUT]):
-    pass
-
 
 class RootTarget(Generic[CTX, IN], BaseTarget[CTX, IN, None]):
     pass
@@ -160,8 +144,3 @@ class OutputPage(Artifact):
     @override
     def write_to(self, path: Path) -> None:
         return super().write_to(path)
-
-@dataclass
-class CompilationSettings:
-    page_parsers: Dict[str, Callable[[LeafTarget[CompilationContext, Path]], CompileTarget[Path, ParsedPage]]]
-    template_parsers: Dict[str, Callable[[LeafTarget[CompilationContext, Path]], CompileTarget[Path, ParsedTemplate]]]

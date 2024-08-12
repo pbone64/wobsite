@@ -1,4 +1,4 @@
 [site]
-templates = "templates"
-pages = "pages"
-assets = "img"
+templates = ["templates"]
+pages = ["pages"]
+assets = ["img"]

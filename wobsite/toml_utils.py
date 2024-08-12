@@ -1,21 +1,26 @@
+from __future__ import annotations # type: ignore
+
 from abc import ABC, abstractmethod
 from datetime import date, datetime, time
-from typing import Dict, Generic, List, TypeVar, override
+from typing import Any, Dict, Generic, List, TypeVar, override
 
 type TomlValue = str | int | float | bool | datetime | date | time | TomlArray | TomlTable
 type TomlArray = List[TomlValue]
 type TomlTable = Dict[str, TomlValue]
 
 T = TypeVar("T", bound = TomlValue, covariant = True)
+U = TypeVar("U", bound = TomlValue, covariant = True)
 class OptionalTomlKey(Generic[T], ABC):
     table: List[str]
     key: str
 
-    def __init__(self, key: str, table: None | str | list[str] = None) -> None:
+    def __init__(self, key: str, table: None | str | list[str] | OptionalTomlKey[Any] = None) -> None:
         if table is None:
             self.table = []
         elif isinstance(table, str):
             self.table = [table]
+        elif isinstance(table, OptionalTomlKey):
+            self.table = table.full_path()
         else:
             self.table = table
 
@@ -64,7 +69,7 @@ class RequiredTomlKey(Generic[T], OptionalTomlKey[T]):
             raise Exception(f"Required toml value {self.full_path} not found.")
 
         return v
-    
+
 class RequiredTomlTable(RequiredTomlKey[TomlTable]):
     @override
     def _checktype(self, value: TomlValue) -> bool:
@@ -104,3 +109,6 @@ def parse_toml_path(text: str) -> tuple[str, list[str]]:
 
     last = len(parts) - 1
     return parts[last], parts[:last]
+
+def strify(array: TomlArray) -> List[str]:
+    return [str(i) for i in array]

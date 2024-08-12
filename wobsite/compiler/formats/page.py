@@ -3,7 +3,8 @@ from typing import override
 
 from lxml import html
 
-from wobsite.compiler import CompilationContext, PageMeta, ParsedPage, CompileTarget
+from wobsite.compiler import PageMeta, ParsedPage
+from wobsite.compiler.compile import CompilationContext, CompileTarget
 
 HTML_TAG_PAGE_META = "wobsite-page"
 HTML_ATTRIB_PAGE_META_TEMPLATE = "template"

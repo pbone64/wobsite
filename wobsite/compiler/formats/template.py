@@ -3,7 +3,8 @@ from typing import override
 
 from lxml import html
 
-from wobsite.compiler import CompilationContext, ParsedTemplate, CompileTarget, TemplateMeta
+from wobsite.compiler import ParsedTemplate, TemplateMeta
+from wobsite.compiler.compile import CompilationContext, CompileTarget
 
 class ParseHtmlTemplate(CompileTarget[Path, ParsedTemplate]):
     @override

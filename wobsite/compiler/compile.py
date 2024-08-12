@@ -1,9 +1,18 @@
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple, override
+from typing import Generic, Tuple, override
 
 from lxml.html import builder as E
 
-from wobsite.compiler import OutputPage, ParsedPage, ParsedTemplate, CompileTarget, CompilationContext
+from wobsite.compiler import IN, OUT, BaseTarget, OutputPage, ParsedPage, ParsedTemplate
+
+@dataclass
+class CompilationContext:
+    def get_output_dir(self) -> Path:
+        return Path("") # TODO
+
+class CompileTarget(Generic[IN, OUT], BaseTarget[CompilationContext, IN, OUT]):
+    pass
 
 class ResolveTemplatePath(CompileTarget[str, Path]):
     @override
