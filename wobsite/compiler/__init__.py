@@ -1,51 +1,114 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Generic, override
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Generic, override
 
 from lxml.html import HtmlElement
 
 IN = TypeVar("IN", contravariant=True)
-OUT = TypeVar("OUT", covariant=True)
+OUT = TypeVar("OUT", covariant=False) # TODO Exec and RunSynchrounous don't work if OUT is covariant
+CTX = TypeVar("CTX")
+
+@dataclass
+class DiscoveryContext:
+    pass
 
 @dataclass
 class CompilationContext:
     def get_output_dir(self) -> Path:
         return Path("") # TODO
 
-class Target(Generic[IN, OUT], ABC):
-    def __init__(self, input: "Target[Any, IN]") -> None:
-        self.__init__(input)
+type TargetInput[CTX, IN] = BaseTarget[CTX, Any, IN]
+class BaseTarget(Generic[CTX, IN, OUT], ABC):
+    input: TargetInput[CTX, IN]
 
-    input: "Target[Any, IN]"
+    def __init__(self, input: TargetInput[CTX, IN]) -> None:
+        self.input = input
 
-    def resolve(self, ctx: CompilationContext) -> OUT:
-        return self._resolve(self.input.resolve(ctx), ctx) # type: ignore
+    def resolve(self, ctx: CTX) -> OUT:
+        return self._resolve(self.input.resolve(ctx), ctx)
 
     @abstractmethod
-    def _resolve(self, input: IN, ctx: CompilationContext) -> OUT:
+    def _resolve(self, input: IN, ctx: CTX) -> OUT:
         pass
 
-class RootTarget(Generic[IN], Target[IN, None]):
+class Process(Generic[CTX, IN, OUT], BaseTarget[CTX, IN, OUT]):
+    proc: Callable[[IN], OUT]
+
+    def __init__(self, proc: Callable[[IN], OUT], input: BaseTarget[CTX, Any, IN]) -> None:
+        self.proc = proc
+        super().__init__(input)
+
+    @override
+    def _resolve(self, input: IN, ctx: CTX) -> OUT:
+        return self.proc(input)
+
+class Exec(Generic[CTX, OUT], BaseTarget[CTX, BaseTarget[CTX, Any, OUT], OUT]):
+    @override
+    def _resolve(self, input: BaseTarget[CTX, Any, OUT], ctx: CTX) -> OUT:
+        return input.resolve(ctx)
+
+class DiscoveryTarget(Generic[IN, OUT], BaseTarget[DiscoveryContext, IN, OUT]):
     pass
 
-class LeafTarget(Generic[OUT], Target[None, OUT]):
+class CompileTarget(Generic[IN, OUT], BaseTarget[CompilationContext, IN, OUT]):
+    pass
+
+
+class RootTarget(Generic[CTX, IN], BaseTarget[CTX, IN, None]):
+    pass
+
+class RunSynchronous(Generic[CTX], RootTarget[CTX, List[RootTarget[CTX, Any]]]):
+    def _resolve(self, input: List[RootTarget[CTX, Any]], ctx: CTX) -> None:
+        for dep in input:
+            dep.resolve(ctx)
+
+
+class LeafTarget(Generic[CTX, OUT], BaseTarget[CTX, None, OUT]):
     def __init__(self) -> None:
-        super().__init__(UnreachableTarget())
+        super().__init__(UnreachableTarget[CTX]())
 
     @override
-    def resolve(self, ctx: CompilationContext) -> OUT:
+    def resolve(self, ctx: CTX) -> OUT:
         return self._resolve(None, ctx)
 
-class UnreachableTarget(Target[None, None]):
+class ValueLeaf(Generic[OUT], LeafTarget[Any, OUT]):
+    value: OUT
+
+    def __init__(self, value: OUT) -> None:
+        self.value = value
+
+    def _resolve(self, input: None, ctx: Any) -> OUT:
+        return self.value
+
+OUT1 = TypeVar("OUT1", covariant=True)
+OUT2 = TypeVar("OUT2", covariant=True)
+class AssembleTuple(Generic[CTX, OUT1, OUT2], LeafTarget[CTX, Tuple[OUT1, OUT2]]):
+    input_1: BaseTarget[CTX, Any, OUT1]
+    input_2: BaseTarget[CTX, Any, OUT2]
+
+    def __init__(self, input_1: BaseTarget[CTX, Any, OUT1], input_2: BaseTarget[CTX, Any, OUT2]) -> None:
+        self.input_1 = input_1
+        self.input_2 = input_2
+
+        super().__init__()
+
+    @override
+    def _resolve(self, input: None, ctx: CTX) -> Tuple[OUT1, OUT2]:
+        return (
+            self.input_1.resolve(ctx), self.input_2.resolve(ctx)
+        )
+
+
+class UnreachableTarget(Generic[CTX], BaseTarget[CTX, None, None]):
     def __init__(self) -> None:
         pass
 
     @override
-    def resolve(self, ctx: CompilationContext) -> None:
+    def resolve(self, ctx: CTX) -> None:
         raise Exception("Unreachable target called")
     
-    def _resolve(self, input: None, ctx: CompilationContext) -> None:
+    def _resolve(self, input: None, ctx: CTX) -> None:
         raise Exception("Unreachable target called")
 
 
@@ -53,6 +116,14 @@ class Artifact(ABC):
     @abstractmethod
     def write_to(self, path: Path) -> None:
         pass
+
+A = TypeVar("A", bound=Artifact)
+class WriteArtifact(Generic[A], RootTarget[Any, Tuple[A, Path]]):
+    def _resolve(self, input: Tuple[A, Path], ctx: Any) -> None:
+        artifact = input[0]
+        path = input[1]
+
+        artifact.write_to(path)
 
 @dataclass(init=False)
 class PageMeta:
@@ -92,6 +163,5 @@ class OutputPage(Artifact):
 
 @dataclass
 class CompilationSettings:
-    page_parsers: Dict[str, Callable[[LeafTarget[Path]], Target[Path, ParsedPage]]]
-    template_parsers: Dict[str, Callable[[LeafTarget[Path]], Target[Path, ParsedTemplate]]]
-    
+    page_parsers: Dict[str, Callable[[LeafTarget[CompilationContext, Path]], CompileTarget[Path, ParsedPage]]]
+    template_parsers: Dict[str, Callable[[LeafTarget[CompilationContext, Path]], CompileTarget[Path, ParsedTemplate]]]
