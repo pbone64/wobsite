@@ -3,7 +3,7 @@ from pathlib import Path
 import tomllib
 from typing import Final
 
-from wobsite.toml_utils import RequiredTomlString, RequiredTomlTable
+from wobsite_oo.toml_utils import RequiredTomlString, RequiredTomlTable
 
 KEY_TEMPLATE_TABLE: Final[RequiredTomlTable] = RequiredTomlTable("template")
 

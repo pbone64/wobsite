@@ -47,7 +47,6 @@ class RunSynchronous(Generic[CTX], RootTarget[CTX, List[RootTarget[CTX, Any]]]):
         for dep in input:
             dep.resolve(ctx)
 
-
 class LeafTarget(Generic[CTX, OUT], BaseTarget[CTX, None, OUT]):
     def __init__(self) -> None:
         super().__init__(UnreachableTarget[CTX]())
@@ -55,15 +54,6 @@ class LeafTarget(Generic[CTX, OUT], BaseTarget[CTX, None, OUT]):
     @override
     def resolve(self, ctx: CTX) -> OUT:
         return self._resolve(None, ctx)
-
-class ValueLeaf(Generic[OUT], LeafTarget[Any, OUT]):
-    value: OUT
-
-    def __init__(self, value: OUT) -> None:
-        self.value = value
-
-    def _resolve(self, input: None, ctx: Any) -> OUT:
-        return self.value
 
 OUT1 = TypeVar("OUT1", covariant=True)
 OUT2 = TypeVar("OUT2", covariant=True)

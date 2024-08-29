@@ -3,8 +3,8 @@ from typing import override
 
 from lxml import html
 
-from wobsite.compiler import PageMeta, ParsedPage
-from wobsite.compiler.compile import CompilationContext, CompileTarget
+from wobsite_oo.compiler import PageMeta, ParsedPage
+from wobsite_oo.compiler.generate import GenerationContext, GenerationTarget
 
 HTML_TAG_PAGE_META = "wobsite-page"
 HTML_ATTRIB_PAGE_META_TEMPLATE = "template"
@@ -12,9 +12,9 @@ HTML_ATTRIB_PAGE_META_OUTPUT_FILE = "output_file"
 
 HTML_TAG_PAGE_PLACEHOLDER = "wobsite-page-placeholder"
 
-class ParseHtmlPage(CompileTarget[Path, ParsedPage]):
+class ParseHtmlPage(GenerationTarget[Path, ParsedPage]):
     @override
-    def _resolve(self, input: Path, ctx: CompilationContext) -> ParsedPage:
+    def _resolve(self, input: Path, ctx: GenerationContext) -> ParsedPage:
         with input.open() as file:
             fragment = html.fragment_fromstring(
                 file.read(),

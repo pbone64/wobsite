@@ -3,7 +3,7 @@ from pathlib import Path
 import tomllib
 from typing import Final, List
 
-from wobsite.toml_utils import RequiredTomlArray, RequiredTomlTable, strify
+from wobsite_oo.toml_utils import RequiredTomlArray, RequiredTomlTable, strify
 
 FILE_NAME: Final[str] = "wobsite.toml"
 

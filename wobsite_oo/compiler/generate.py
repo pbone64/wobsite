@@ -4,24 +4,24 @@ from typing import Generic, Tuple, override
 
 from lxml.html import builder as E
 
-from wobsite.compiler import IN, OUT, BaseTarget, OutputPage, ParsedPage, ParsedTemplate
+from wobsite_oo.compiler import IN, OUT, BaseTarget, OutputPage, ParsedPage, ParsedTemplate
 
 @dataclass
-class CompilationContext:
+class GenerationContext:
     def get_output_dir(self) -> Path:
         return Path("") # TODO
 
-class CompileTarget(Generic[IN, OUT], BaseTarget[CompilationContext, IN, OUT]):
+class GenerationTarget(Generic[IN, OUT], BaseTarget[GenerationContext, IN, OUT]):
     pass
 
-class ResolveTemplatePath(CompileTarget[str, Path]):
+class ResolveTemplatePath(GenerationTarget[str, Path]):
     @override
-    def _resolve(self, input: str, ctx: CompilationContext) -> Path:
+    def _resolve(self, input: str, ctx: GenerationContext) -> Path:
         return super()._resolve(input, ctx) # TODO
-    
-class MetaParsePage(CompileTarget[Path, CompileTarget[Path, ParsedPage]]):
+
+class MetaParsePage(GenerationTarget[Path, GenerationTarget[Path, ParsedPage]]):
     @override
-    def _resolve(self, input: Path, ctx: CompilationContext) -> CompileTarget[Path, ParsedPage]:
+    def _resolve(self, input: Path, ctx: GenerationContext) -> GenerationTarget[Path, ParsedPage]:
         if not input.is_file():
             raise Exception(f"{input} is not a file")
 
@@ -29,36 +29,20 @@ class MetaParsePage(CompileTarget[Path, CompileTarget[Path, ParsedPage]]):
 
         return super()._resolve(input, ctx) # TODO
 
-class MetaParseTemplate(CompileTarget[Path, CompileTarget[Path, ParsedTemplate]]):
+class MetaParseTemplate(GenerationTarget[Path, GenerationTarget[Path, ParsedTemplate]]):
     @override
-    def _resolve(self, input: Path, ctx: CompilationContext) -> CompileTarget[Path, ParsedTemplate]:
+    def _resolve(self, input: Path, ctx: GenerationContext) -> GenerationTarget[Path, ParsedTemplate]:
         if not input.is_file():
             raise Exception(f"{input} is not a file")
 
         #ext = os.path.splitext(input.name)
 
         return super()._resolve(input, ctx) # TODO
-
-# FIXME two stage compilation
-# class MetaCheckTemplate(CompileTarget[ParsedPage, LeafTarget[CompilationContext, Tuple[ParsedPage, ParsedTemplate | None]]]):
-#     @override
-#     def _resolve(self, input: ParsedPage, ctx: CompilationContext) -> LeafTarget[CompilationContext, Tuple[ParsedPage, ParsedTemplate | None]]:
-#         if input.meta.template is None:
-#             return ValueLeaf((input, None))
-#         else:
-#             return AssembleTuple[CompilationContext, ParsedPage, ParsedTemplate | None](
-#                 input_1 = ValueLeaf(input),
-#                 input_2 = Exec(input = MetaParseTemplate(
-#                     input = ResolveTemplatePath(
-#                         input = ValueLeaf(input.meta.template)
-#                     )
-#                 ))
-#             )
 
 HTML_TAG_PAGE_PLACEHOLDER = "wobsite-page-placeholder"
-class BuildOutputPage(CompileTarget[Tuple[ParsedPage, ParsedTemplate | None], OutputPage]):
+class GeneratePage(GenerationTarget[Tuple[ParsedPage, ParsedTemplate | None], OutputPage]):
     @override
-    def _resolve(self, input: Tuple[ParsedPage, ParsedTemplate | None], ctx: CompilationContext) -> OutputPage:
+    def _resolve(self, input: Tuple[ParsedPage, ParsedTemplate | None], ctx: GenerationContext) -> OutputPage:
         page = input[0]
         template = input[1]
 
