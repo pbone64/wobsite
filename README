@@ -2,19 +2,18 @@ wobsite is a static site generator designed to be simple and lightweight. It's p
 
 It aims to:
 - Support common and widely-used markup formats.
-  - wobsite supports HTML5 for templates and pages, as well as markdown for pages.
+  - wobsite supports HTML5 for templates and pages.
 - Specify the website structure in an obvious and declarative manner.
   - Site, template, and pages are all defined by .toml files with consistent naming rules.
 - Have fast compile times.
   - Currently, this is accomplished by keeping a slim feature-set.
   - In the future, I hope to add incremental compiling.
 
-# Features
-- Supported languages for templates: HTML5
-- Supported languages for pages: HTML5, CommonMark
-
 # Usage
-Currently, wobsite is only available as a library. A cli application is planned.
+python wobsite_cli <path_to_wobsite_directory>
+
+All required libraries are specified in requirements.txt.
+For an example wobsite, see the example/ folder.
 
 # Contributing
-All required libraries are specified in requirements.txt. Additionally, I recommend a type checker such as mypy or Pyright (Pylance) with strict typing enabled
+wobsite uses python type hints. I recommend a type checker such as mypy or Pyright (Pylance) with strict typing enabled
