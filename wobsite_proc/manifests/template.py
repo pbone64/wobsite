@@ -12,15 +12,17 @@ KEY_NAME: Final[RequiredTomlString] = RequiredTomlString("name", KEY_TEMPLATE_TA
 
 @dataclass
 class TemplateManifest:
+    dir: Path
     path: Path
     name: str
     file: str
 
-def parse_file(path: Path) -> TemplateManifest:
+def parse_file(path: Path, dir: Path) -> TemplateManifest:
     with path.open("rb") as file:
         toml = tomllib.load(file)
 
     return TemplateManifest(
+        dir = dir,
         path = path,
         name = KEY_NAME.get_in(toml),
         file = KEY_FILE.get_in(toml)

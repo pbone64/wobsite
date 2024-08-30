@@ -31,7 +31,7 @@ def parse_file(path: Path) -> SiteManifest:
 
 def get_in(path: Path) -> Optional[SiteManifest]:
     mpath = (path / FILE_NAME)
-    if not mpath.exists():
+    if not mpath.exists() or not mpath.is_file():
         return None
     
-    return parse_file(path)
+    return parse_file(mpath)

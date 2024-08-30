@@ -52,7 +52,7 @@ class OptionalTomlKey(Generic[T], ABC):
         if self._checktype(p):
             return p # type: ignore
         # This list check is an annoying hack but checktype should be fast so I'm not worried
-        if self._checktype([p]):
+        elif self._checktype([p]):
             return [p] # type: ignore
         else:
             return None
@@ -63,7 +63,7 @@ class OptionalTomlKey(Generic[T], ABC):
 class OptionalTomlString(OptionalTomlKey[str]):
     @override
     def _checktype(self, value: TomlValue) -> bool:
-        return value is str
+        return isinstance(value, str)
 
 class RequiredTomlKey(Generic[T], OptionalTomlKey[T]):
     @override
@@ -78,10 +78,10 @@ class RequiredTomlKey(Generic[T], OptionalTomlKey[T]):
 class RequiredTomlTable(RequiredTomlKey[TomlTable]):
     @override
     def _checktype(self, value: TomlValue) -> bool:
-        return isinstance(value, (dict
+        return isinstance(value, dict
             #List[str], List[int], List[float], List[bool], List[datetime], List[date], List[time],
             #Dict[str, str], Dict[str, int], Dict[str, float], Dict[str, bool], Dict[str, datetime], Dict[str, date], Dict[str, time]
-        ))
+        )
 
 class RequiredTomlArray(RequiredTomlKey[TomlArray]):
     @override

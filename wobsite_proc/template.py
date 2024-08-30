@@ -32,7 +32,7 @@ class ParsedTemplate:
         return etree.tostring(self.document, encoding="unicode", method="html")
 
 def parse_html(manifest: TemplateManifest) -> ParsedTemplate:
-    path = (manifest.path / manifest.file)
+    path = (manifest.dir / manifest.file)
 
     with path.open() as file:
         document = html.document_fromstring(
